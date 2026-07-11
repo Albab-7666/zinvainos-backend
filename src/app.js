@@ -7,27 +7,6 @@ const rateLimit = require('express-rate-limit');
 const { errorHandler } = require('./middleware/errorHandler');
 const { logger } = require('./utils/logger');
 
-// Import routes
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const clientRoutes = require('./routes/clientRoutes');
-const projectRoutes = require('./routes/projectRoutes');
-const taskRoutes = require('./routes/taskRoutes');
-const timeRoutes = require('./routes/timeRoutes');
-const attendanceRoutes = require('./routes/attendanceRoutes');
-const leaveRoutes = require('./routes/leaveRoutes');
-const payrollRoutes = require('./routes/payrollRoutes');
-const invoiceRoutes = require('./routes/invoiceRoutes');
-const meetingRoutes = require('./routes/meetingRoutes');
-const fileRoutes = require('./routes/fileRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const approvalRoutes = require('./routes/approvalRoutes');
-const commentRoutes = require('./routes/commentRoutes');
-const sprintRoutes = require('./routes/sprintRoutes');
-const announcementRoutes = require('./routes/announcementRoutes');
-const reportRoutes = require('./routes/reportRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -37,14 +16,14 @@ app.use(compression());
 
 // CORS
 app.use(cors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000', 'http://localhost:5173'],
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true
 }));
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 100
 });
 app.use('/api', limiter);
 
@@ -59,25 +38,25 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/time', timeRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/leave', leaveRoutes);
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/meetings', meetingRoutes);
-app.use('/api/files', fileRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/approvals', approvalRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/sprints', sprintRoutes);
-app.use('/api/announcements', announcementRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/clients', require('./routes/clientRoutes'));
+app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/tasks', require('./routes/taskRoutes'));
+app.use('/api/time', require('./routes/timeRoutes'));
+app.use('/api/attendance', require('./routes/attendanceRoutes'));
+app.use('/api/leave', require('./routes/leaveRoutes'));
+app.use('/api/payroll', require('./routes/payrollRoutes'));
+app.use('/api/invoices', require('./routes/invoiceRoutes'));
+app.use('/api/meetings', require('./routes/meetingRoutes'));
+app.use('/api/files', require('./routes/fileRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/approvals', require('./routes/approvalRoutes'));
+app.use('/api/comments', require('./routes/commentRoutes'));
+app.use('/api/sprints', require('./routes/sprintRoutes'));
+app.use('/api/announcements', require('./routes/announcementRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => {
