@@ -8,68 +8,109 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security middleware
+// ========== MIDDLEWARE ==========
 app.use(helmet());
 app.use(compression());
 
-// CORS
 app.use(cors({
     origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true
 }));
 
-// Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100
 });
 app.use('/api', limiter);
 
-// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health check (BEFORE routes)
+// ========== HEALTH CHECK ==========
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime()
     });
 });
 
-// Root route
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         message: 'ZinvainOS API is running',
-        version: '1.0.0'
+        version: '1.0.0',
+        status: 'active'
     });
 });
 
-// Routes (only import what exists)
+// ========== ROUTES ==========
+// Auth Routes
 try {
-    app.use('/api/auth', require('./routes/authRoutes'));
-    app.use('/api/users', require('./routes/userRoutes'));
-    app.use('/api/clients', require('./routes/clientRoutes'));
-    app.use('/api/projects', require('./routes/projectRoutes'));
-    app.use('/api/tasks', require('./routes/taskRoutes'));
-} catch (error) {
-    console.log('Some routes not loaded yet');
+    const authRoutes = require('./routes/authRoutes');
+    if (authRoutes && typeof authRoutes === 'function') {
+        app.use('/api/auth', authRoutes);
+    } else {
+        app.use('/api/auth', authRoutes);
+    }
+} catch (err) {
+    console.log('⚠️ Auth routes not loaded:', err.message);
 }
 
-// Error handling
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ 
-        error: 'Something went wrong!',
-        message: err.message 
+// User Routes
+try {
+    const userRoutes = require('./routes/userRoutes');
+    app.use('/api/users', userRoutes);
+} catch (err) {
+    console.log('⚠️ User routes not loaded:', err.message);
+}
+
+// Client Routes
+try {
+    const clientRoutes = require('./routes/clientRoutes');
+    app.use('/api/clients', clientRoutes);
+} catch (err) {
+    console.log('⚠️ Client routes not loaded:', err.message);
+}
+
+// Project Routes
+try {
+    const projectRoutes = require('./routes/projectRoutes');
+    app.use('/api/projects', projectRoutes);
+} catch (err) {
+    console.log('⚠️ Project routes not loaded:', err.message);
+}
+
+// Task Routes
+try {
+    const taskRoutes = require('./routes/taskRoutes');
+    app.use('/api/tasks', taskRoutes);
+} catch (err) {
+    console.log('⚠️ Task routes not loaded:', err.message);
+}
+
+// ========== 404 HANDLER ==========
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Route not found',
+        path: req.originalUrl
     });
 });
 
-// Start server
+// ========== ERROR HANDLER ==========
+app.use((err, req, res, next) => {
+    console.error('❌ Error:', err.message);
+    console.error(err.stack);
+    res.status(500).json({
+        error: 'Internal server error',
+        message: err.message
+    });
+});
+
+// ========== START SERVER ==========
 app.listen(PORT, () => {
     console.log(`🚀 ZinvainOS Backend running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
 });
 
 module.exports = app;
