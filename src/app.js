@@ -11,14 +11,14 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(compression());
 app.use(cors({ 
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000', 'http://localhost:5173'], 
+    origin: '*',
     credentials: true 
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ============================================
-// HEALTH CHECK - THIS WORKS
+// HEALTH CHECK
 // ============================================
 app.get('/api/health', (req, res) => {
     res.json({ 
@@ -29,21 +29,53 @@ app.get('/api/health', (req, res) => {
 });
 
 // ============================================
-// AUTH ROUTES - DUMMY VERSION FOR TESTING
+// AUTH ROUTES
 // ============================================
+app.post('/api/auth/register', (req, res) => {
+    const { email, password, fullName, role } = req.body;
+    res.json({ 
+        message: 'Registration successful. Please wait for approval.',
+        user: { 
+            id: Date.now().toString(), 
+            email, 
+            fullName, 
+            role: role || 'EMPLOYEE',
+            status: 'PENDING' 
+        }
+    });
+});
+
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
     
-    // Simple test login
+    // CEO login
     if (email === 'ceo@zinvain.com' && password === 'Admin@2024') {
         return res.json({
-            accessToken: 'fake-jwt-token-for-testing',
-            refreshToken: 'fake-refresh-token',
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJlbWFpbCI6ImNlb0B6aW52YWluLmNvbSIsInJvbGUiOiJDRU8ifQ.test',
+            refreshToken: 'refresh-token-test',
             user: {
                 id: '1',
                 email: 'ceo@zinvain.com',
                 fullName: 'CEO User',
-                role: 'CEO'
+                role: 'CEO',
+                department: 'Executive',
+                position: 'CEO'
+            }
+        });
+    }
+    
+    // Employee login
+    if (email === 'employee@zinvain.com' && password === 'Employee@123') {
+        return res.json({
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJlbWFpbCI6ImVtcGxveWVlQHppbnZhaW4uY29tIiwicm9sZSI6IkVNUExPWUVFIn0.test',
+            refreshToken: 'refresh-token-test',
+            user: {
+                id: '2',
+                email: 'employee@zinvain.com',
+                fullName: 'Employee User',
+                role: 'EMPLOYEE',
+                department: 'Engineering',
+                position: 'Developer'
             }
         });
     }
@@ -51,29 +83,210 @@ app.post('/api/auth/login', (req, res) => {
     res.status(401).json({ error: 'Invalid credentials' });
 });
 
-app.post('/api/auth/register', (req, res) => {
+app.get('/api/auth/me', (req, res) => {
+    // Return mock user for testing
+    res.json({
+        user: {
+            id: '1',
+            email: 'ceo@zinvain.com',
+            fullName: 'CEO User',
+            role: 'CEO',
+            department: 'Executive',
+            position: 'CEO',
+            status: 'ACTIVE'
+        }
+    });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    res.json({ message: 'Logged out successfully' });
+});
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+app.get('/api/notifications', (req, res) => {
     res.json({ 
-        message: 'Registration successful. Please wait for approval.',
-        user: { id: '2', email: req.body.email, status: 'PENDING' }
+        notifications: [
+            {
+                id: '1',
+                title: 'Welcome to ZinvainOS',
+                message: 'Your account is ready to use!',
+                type: 'SYSTEM',
+                is_read: false,
+                created_at: new Date().toISOString()
+            }
+        ], 
+        unreadCount: 1 
+    });
+});
+
+app.get('/api/notifications/unread', (req, res) => {
+    res.json({ unreadCount: 1 });
+});
+
+app.put('/api/notifications/:id/read', (req, res) => {
+    res.json({ message: 'Marked as read' });
+});
+
+app.put('/api/notifications/read-all', (req, res) => {
+    res.json({ message: 'All marked as read' });
+});
+
+// ============================================
+// USERS
+// ============================================
+app.get('/api/users', (req, res) => {
+    res.json({
+        users: [
+            {
+                id: '1',
+                email: 'ceo@zinvain.com',
+                full_name: 'CEO User',
+                role: 'CEO',
+                status: 'ACTIVE',
+                department: 'Executive'
+            },
+            {
+                id: '2',
+                email: 'employee@zinvain.com',
+                full_name: 'Employee User',
+                role: 'EMPLOYEE',
+                status: 'ACTIVE',
+                department: 'Engineering'
+            }
+        ]
+    });
+});
+
+app.get('/api/users/pending', (req, res) => {
+    res.json({ users: [] });
+});
+
+app.post('/api/users/:id/approve', (req, res) => {
+    res.json({ message: 'User approved' });
+});
+
+// ============================================
+// DASHBOARD
+// ============================================
+app.get('/api/dashboard/overview', (req, res) => {
+    res.json({
+        stats: {
+            totalTasks: 25,
+            activeProjects: 5,
+            teamMembers: 12,
+            totalRevenue: 15000,
+            pendingApprovals: 0
+        }
+    });
+});
+
+app.get('/api/dashboard/activities', (req, res) => {
+    res.json({
+        activities: [
+            { action: 'User logged in', module: 'AUTH', created_at: new Date().toISOString() }
+        ]
+    });
+});
+
+app.get('/api/dashboard/tasks', (req, res) => {
+    res.json({
+        stats: {
+            todo: 10,
+            in_progress: 8,
+            review: 3,
+            completed: 20,
+            blocked: 2
+        }
+    });
+});
+
+app.get('/api/dashboard/deadlines', (req, res) => {
+    res.json({ deadlines: [] });
+});
+
+// ============================================
+// PROJECTS
+// ============================================
+app.get('/api/projects', (req, res) => {
+    res.json({
+        projects: [
+            {
+                id: '1',
+                name: 'ZinvainOS Development',
+                status: 'ACTIVE',
+                priority: 'HIGH',
+                description: 'Main OS development'
+            }
+        ]
     });
 });
 
 // ============================================
-// NOTIFICATIONS - DUMMY VERSION
+// TASKS
 // ============================================
-app.get('/api/notifications', (req, res) => {
-    res.json({ notifications: [], unreadCount: 0 });
+app.get('/api/tasks', (req, res) => {
+    res.json({
+        tasks: [
+            {
+                id: '1',
+                title: 'Complete Login System',
+                status: 'IN_PROGRESS',
+                priority: 'HIGH',
+                description: 'Implement JWT auth'
+            }
+        ]
+    });
 });
 
-app.get('/api/notifications/unread', (req, res) => {
-    res.json({ unreadCount: 0 });
+// ============================================
+// CLIENTS
+// ============================================
+app.get('/api/clients', (req, res) => {
+    res.json({
+        clients: [
+            {
+                id: '1',
+                company_name: 'Zinvain Studios',
+                contact_name: 'CEO',
+                email: 'ceo@zinvain.com',
+                status: 'ACTIVE'
+            }
+        ]
+    });
 });
 
 // ============================================
 // ROOT
 // ============================================
 app.get('/', (req, res) => {
-    res.json({ message: 'ZinvainOS API', version: '1.0.0', status: 'running' });
+    res.json({ 
+        message: 'ZinvainOS API', 
+        version: '1.0.0', 
+        status: 'running',
+        routes: [
+            '/api/health',
+            '/api/auth/login',
+            '/api/auth/register',
+            '/api/auth/me',
+            '/api/notifications',
+            '/api/users',
+            '/api/dashboard/overview',
+            '/api/projects',
+            '/api/tasks',
+            '/api/clients'
+        ]
+    });
+});
+
+// Catch all - return 404 with helpful message
+app.use('*', (req, res) => {
+    res.status(404).json({ 
+        error: 'Route not found',
+        path: req.originalUrl,
+        message: 'The requested API endpoint does not exist'
+    });
 });
 
 app.listen(PORT, () => {
