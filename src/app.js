@@ -17,7 +17,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// === HEALTH CHECK ===
+// ============================================
+// HEALTH CHECK - THIS WORKS
+// ============================================
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'OK', 
@@ -26,47 +28,50 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// === AUTH ROUTES ===
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
+// ============================================
+// AUTH ROUTES - DUMMY VERSION FOR TESTING
+// ============================================
+app.post('/api/auth/login', (req, res) => {
+    const { email, password } = req.body;
+    
+    // Simple test login
+    if (email === 'ceo@zinvain.com' && password === 'Admin@2024') {
+        return res.json({
+            accessToken: 'fake-jwt-token-for-testing',
+            refreshToken: 'fake-refresh-token',
+            user: {
+                id: '1',
+                email: 'ceo@zinvain.com',
+                fullName: 'CEO User',
+                role: 'CEO'
+            }
+        });
+    }
+    
+    res.status(401).json({ error: 'Invalid credentials' });
+});
 
-// === USER ROUTES ===
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
+app.post('/api/auth/register', (req, res) => {
+    res.json({ 
+        message: 'Registration successful. Please wait for approval.',
+        user: { id: '2', email: req.body.email, status: 'PENDING' }
+    });
+});
 
-// === CLIENT ROUTES ===
-const clientRoutes = require('./routes/clientRoutes');
-app.use('/api/clients', clientRoutes);
+// ============================================
+// NOTIFICATIONS - DUMMY VERSION
+// ============================================
+app.get('/api/notifications', (req, res) => {
+    res.json({ notifications: [], unreadCount: 0 });
+});
 
-// === PROJECT ROUTES ===
-const projectRoutes = require('./routes/projectRoutes');
-app.use('/api/projects', projectRoutes);
+app.get('/api/notifications/unread', (req, res) => {
+    res.json({ unreadCount: 0 });
+});
 
-// === TASK ROUTES ===
-const taskRoutes = require('./routes/taskRoutes');
-app.use('/api/tasks', taskRoutes);
-
-// === TIME ROUTES ===
-const timeRoutes = require('./routes/timeRoutes');
-app.use('/api/time', timeRoutes);
-
-// === ATTENDANCE ROUTES ===
-const attendanceRoutes = require('./routes/attendanceRoutes');
-app.use('/api/attendance', attendanceRoutes);
-
-// === LEAVE ROUTES ===
-const leaveRoutes = require('./routes/leaveRoutes');
-app.use('/api/leave', leaveRoutes);
-
-// === NOTIFICATION ROUTES ===
-const notificationRoutes = require('./routes/notificationRoutes');
-app.use('/api/notifications', notificationRoutes);
-
-// === DASHBOARD ROUTES ===
-const dashboardRoutes = require('./routes/dashboardRoutes');
-app.use('/api/dashboard', dashboardRoutes);
-
-// Root
+// ============================================
+// ROOT
+// ============================================
 app.get('/', (req, res) => {
     res.json({ message: 'ZinvainOS API', version: '1.0.0', status: 'running' });
 });
