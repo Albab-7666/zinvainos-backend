@@ -7,6 +7,7 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'zinvainos',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
+    ssl: { rejectUnauthorized: false },  // ← Added for Supabase
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
